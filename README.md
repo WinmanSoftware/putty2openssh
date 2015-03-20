@@ -3,7 +3,7 @@ Convert RFC 4716 compliant SSH public keys (created by PuTTY and others programs
 
 ## Usage
 ```bash
-putty2openssh publickeyfile [username]
+$ putty2openssh publickeyfile [username]
 ```
 
 `putty2openssh` accepts two parameters. 
