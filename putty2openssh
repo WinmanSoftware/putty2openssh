@@ -8,6 +8,7 @@ publickey=$(ssh-keygen -if "$RFC4716key")
 comment=$(cat "$RFC4716key" | awk '/Comment:/,/[^\\]$/' | sed 's_\\$__' | tr -d '\n' | sed -e 's_Comment: __' -e 's_"__g')
 openssh="$publickey $comment"
 
+mkdir -p "/home/$USERNAME/.ssh/"
 echo $openssh >> "/home/$USERNAME/.ssh/authorized_keys"
 echo "Added public key $RFC4716key to $USERNAME's authorized_keys file"
 echo "$RFC4716key comment: $comment"
