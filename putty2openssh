@@ -4,11 +4,25 @@
 RFC4716key=$1
 USERNAME=${2:-$USER}
 
+# Generates public key using ssh-keygen
 publickey=$(ssh-keygen -if "$RFC4716key")
+
+# Extracts comment from input publickey
+#   1. awk extracts muiltiline comment header
+#   2. sed removes trailing backslashes from comment header
+#   3. tr converts multiline comment into single line comment
+#   4. sed removes 'Comment: ' keyword and quotes
 comment=$(cat "$RFC4716key" | awk '/Comment:/,/[^\\]$/' | sed 's_\\$__' | tr -d '\n' | sed -e 's_Comment: __' -e 's_"__g')
+
+# Concatenates the publickey and comment
 openssh="$publickey $comment"
 
+# Creates user's .ssh directory if not present
 mkdir -p "/home/$USERNAME/.ssh/"
+
+# Appends extracted key w. comment to users authorized_keys file
+#  to the end of the file, leaving existing keys untouched
 echo $openssh >> "/home/$USERNAME/.ssh/authorized_keys"
+
 echo "Added public key $RFC4716key to $USERNAME's authorized_keys file"
 echo "$RFC4716key comment: $comment"
