@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# This script converts a RFC 4716 SSH public key format inout file into the one-line format utilized by OpenSSH in key based authentication.
+# See accompanying README for usage details
