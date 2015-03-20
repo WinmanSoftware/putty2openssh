@@ -1,4 +1,10 @@
 #!/bin/bash
-
 # This script converts a RFC 4716 SSH public key format inout file into the one-line format utilized by OpenSSH in key based authentication.
 # See accompanying README for usage details
+RFC4716key="$1"
+
+publickey=$(ssh-keygen -if "$RFC4716key")
+comment=$(cat "$RFC4716key" | awk '/Comment:/,/[^\\]$/' | sed 's_\\$__' | tr -d '\n' | sed -e 's_Comment: __' -e 's_"__g')
+
+openssh="$publickey $comment"
+echo $openssh
