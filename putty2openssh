@@ -48,12 +48,21 @@ if [[ ! -f "$RFC4716key" ]];
                 # Creates user's .ssh directory if not present
                 mkdir -p "/home/$USERNAME/.ssh/"
 
+                # Enable write permissions to users  authorized_keys file
+                touch "/home/$USERNAME/.ssh/authorized_keys"
+                chmod 660 "/home/$USERNAME/.ssh/authorized_keys"
+
                 # Appends extracted key w. comment to users authorized_keys file
                 #  to the end of the file, leaving existing keys untouched
                 echo $openssh >> "/home/$USERNAME/.ssh/authorized_keys"
 
-                # Fix folder ownership, or else sshd will not accept authorized_keys file
-                chown --quiet --recursive "$USERNAME" "/home/$USERNAME"
+                # Fix file/folder permissions, or else sshd will not accept authorized_keys file
+                chmod go-w "/home/$USERNAME"
+                chmod go-rwx "/home/$USERNAME/.ssh"
+                chmod 600 "/home/$USERNAME/.ssh/authorized_keys"
+                chown --quiet "$USERNAME" "/home/$USERNAME"
+                chown --quiet --recursive "$USERNAME" "/home/$USERNAME/.ssh"
+
 
                 echo "SUCCESS: Added public key to authorized_keys file"
                 echo "Username: $USERNAME"
