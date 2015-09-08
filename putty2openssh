@@ -4,34 +4,40 @@
 RFC4716key=$1
 USERNAME=${2:-$USER}
 
-if [ ! -f "$RFC4716key" ];
+if [[ ! -f "$RFC4716key" ]];
   then
-    echo "ERROR: $RFC4716key does not exist."
+    echo "ERROR: Keyfile does not exist: $RFC4716key"
     exit 4
   else
-    # Generates public key using ssh-keygen
-    publickey=$(ssh-keygen -if "$RFC4716key")
+    ssh-keygen -if "$RFC4716key" &> /dev/null
+    if [[ $? != 0 ]];
+      then
+        echo "ERROR: $RFC4716key is NOT a RFC 4716 keyfile."
+      else
+        # Generates public key using ssh-keygen
+        publickey=$(ssh-keygen -if "$RFC4716key")
 
-    # Extracts comment from input publickey
-    #   1. awk extracts muiltiline comment header
-    #   2. sed removes trailing backslashes from comment header
-    #   3. tr converts multiline comment into single line comment
-    #   4. sed removes 'Comment: ' keyword and quotes
-    comment=$(cat "$RFC4716key" | awk '/Comment:/,/[^\\]$/' | sed 's_\\$__' | tr -d '\n' | sed -e 's_Comment: __' -e 's_"__g')
+        # Extracts comment from input publickey
+        #   1. awk extracts muiltiline comment header
+        #   2. sed removes trailing backslashes from comment header
+        #   3. tr converts multiline comment into single line comment
+        #   4. sed removes 'Comment: ' keyword and quotes
+        comment=$(cat "$RFC4716key" | awk '/Comment:/,/[^\\]$/' | sed 's_\\$__' | tr -d '\n' | sed -e 's_Comment: __' -e 's_"__g')
 
-    # Concatenates the publickey and comment
-    openssh="$publickey $comment"
+        # Concatenates the publickey and comment
+        openssh="$publickey $comment"
 
-    # Creates user's .ssh directory if not present
-    mkdir -p "/home/$USERNAME/.ssh/"
+        # Creates user's .ssh directory if not present
+        mkdir -p "/home/$USERNAME/.ssh/"
 
-    # Appends extracted key w. comment to users authorized_keys file
-    #  to the end of the file, leaving existing keys untouched
-    echo $openssh >> "/home/$USERNAME/.ssh/authorized_keys"
+        # Appends extracted key w. comment to users authorized_keys file
+        #  to the end of the file, leaving existing keys untouched
+        echo $openssh >> "/home/$USERNAME/.ssh/authorized_keys"
 
-    # Fix folder ownership, or else sshd will not accept authorized_keys file
-    chown --quiet --recursive "$USERNAME" "/home/$USERNAME"
+        # Fix folder ownership, or else sshd will not accept authorized_keys file
+        chown --quiet --recursive "$USERNAME" "/home/$USERNAME"
 
-    echo "Added public key $RFC4716key to $USERNAME's authorized_keys file"
-    echo "$RFC4716key comment: $comment"
+        echo "Added public key $RFC4716key to $USERNAME's authorized_keys file"
+        echo "$RFC4716key comment: $comment"
+    fi
 fi
