@@ -55,8 +55,10 @@ if [[ ! -f "$RFC4716key" ]];
                 # Fix folder ownership, or else sshd will not accept authorized_keys file
                 chown --quiet --recursive "$USERNAME" "/home/$USERNAME"
 
-                echo "Added public key $RFC4716key to $USERNAME's authorized_keys file"
-                echo "$RFC4716key comment: $comment"
+                echo "SUCCESS: Added public key to authorized_keys file"
+                echo "Username: $USERNAME"
+                echo "Keyfile:  $RFC4716key"
+                echo "Comment:  $comment"
             fi
         fi
     fi
