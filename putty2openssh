@@ -39,6 +39,8 @@ if [[ ! -f "$RFC4716key" ]];
                 #   3. tr converts multiline comment into single line comment
                 #   4. sed removes 'Comment: ' keyword and quotes
                 comment=$(cat "$RFC4716key" | awk '/Comment:/,/[^\\]$/' | sed 's_\\$__' | tr -d '\n' | sed -e 's_Comment: __' -e 's_"__g')
+                comment="$comment ADDED on: $(date)"
+                comment="$comment ADDED by: $USER"
 
                 # Concatenates the publickey and comment
                 openssh="$publickey $comment"
