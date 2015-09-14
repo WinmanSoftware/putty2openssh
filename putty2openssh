@@ -27,10 +27,12 @@ if [[ ! -f "$RFC4716key" ]];
             publickey=$(ssh-keygen -if "$RFC4716key")
 
             #Check if publickey is already present in users ~/.ssh/authorized_keys file
-            grep "$publickey" "/home/$USERNAME/.ssh/authorized_keys" &> /dev/null
-            if [[ $? == 0 ]];
+            duplicateKey_comment=$(grep "$publickey" "/home/$USERNAME/.ssh/authorized_keys" | sed 's_^.*==__' | sed 's_^\ __')
+            if [[ ! -z $duplicateKey_comment ]];
               then
-                echo "WARNING: Key is already present in $USERNAME's authorized_keys file"
+                echo "ERROR: Key is already present in $USERNAME's authorized_keys file"
+                echo "  Existing key comment:"
+                echo "    $duplicateKey_comment"
                 exit 32
               else
                 # Extracts comment from input publickey
