@@ -56,7 +56,7 @@ if [[ ! -f "$RFC4716key" ]];
                     echo "$repeatedComment_lines" | while read commentLine; do
                       repeatedComment_comment=$(echo $commentLine | sed 's_^.*==__' | sed 's_^\ __' )
                       echo "  Similar Key Comment $repeatedComment_count : $repeatedComment_comment"
-                      ((repeatedComment_count))
+                      ((repeatedComment_count++))
                     done
                     echo "Add current key to authorized_keys ?"
                     select yn in "Yes" "No" ; do
