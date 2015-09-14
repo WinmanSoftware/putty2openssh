@@ -23,6 +23,8 @@ if [[ ! -f "$RFC4716key" ]];
             echo "ERROR: Username not present on system: $USERNAME"
             exit 16
           else
+            keyAdd=true
+
             # Generates public key using ssh-keygen
             publickey=$(ssh-keygen -if "$RFC4716key")
 
@@ -55,6 +57,16 @@ if [[ ! -f "$RFC4716key" ]];
                       repeatedComment_comment=$(echo $commentLine | sed 's_^.*==__' | sed 's_^\ __' )
                       echo "  Similar Key Comment $repeatedComment_count : $repeatedComment_comment"
                       ((repeatedComment_count))
+                    done
+                    echo "Add current key to authorized_keys ?"
+                    select yn in "Yes" "No" ; do
+                      case $yn in
+                        Yes )  keyAdd=true;
+                               break;;
+                        No  )  keyAdd=false;
+                               break;;
+                        *   )  echo "Invalid option, try again"
+                      esac
                     done
                 fi
 
