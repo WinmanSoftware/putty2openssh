@@ -58,32 +58,33 @@ if [[ ! -f "$RFC4716key" ]];
                         *   )  echo "Invalid option, try again"
                       esac
                     done
+                  else
+                    #Check if key comment is repeated
+                    repeatedComment_lines=$(grep "$comment" "/home/$USERNAME/.ssh/authorized_keys")
+                    if [[ ! -z $repeatedComment_lines ]];
+                      then
+                        echo "WARNING: Key(s) with similar comment is already present"
+                        repeatedComment_count=1
+                        echo "  New key comment: $comment"
+                        # List the comments of the keys with similar comments
+                        echo "$repeatedComment_lines" | while read commentLine; do
+                          repeatedComment_comment=$(echo $commentLine | sed 's_^.*==__' | sed 's_^\ __' )
+                          echo "  Similar Key Comment $repeatedComment_count : $repeatedComment_comment"
+                          ((repeatedComment_count++))
+                        done
+                        echo "Add current key to authorized_keys ?"
+                        select yn in "Yes" "No" ; do
+                          case $yn in
+                            Yes )  keyAdd=true;
+                                   break;;
+                            No  )  keyAdd=false;
+                                   break;;
+                            *   )  echo "Invalid option, try again"
+                          esac
+                        done
+                    fi
                 fi
 
-                #Check if key comment is repeated
-                repeatedComment_lines=$(grep "$comment" "/home/$USERNAME/.ssh/authorized_keys")
-                if [[ ! -z $repeatedComment_lines ]];
-                  then
-                    echo "WARNING: Key(s) with similar comment is already present"
-                    repeatedComment_count=1
-                    echo "  New key comment: $comment"
-                    # List the comments of the keys with similar comments
-                    echo "$repeatedComment_lines" | while read commentLine; do
-                      repeatedComment_comment=$(echo $commentLine | sed 's_^.*==__' | sed 's_^\ __' )
-                      echo "  Similar Key Comment $repeatedComment_count : $repeatedComment_comment"
-                      ((repeatedComment_count++))
-                    done
-                    echo "Add current key to authorized_keys ?"
-                    select yn in "Yes" "No" ; do
-                      case $yn in
-                        Yes )  keyAdd=true;
-                               break;;
-                        No  )  keyAdd=false;
-                               break;;
-                        *   )  echo "Invalid option, try again"
-                      esac
-                    done
-                fi
                 if [[ $keyAdd = true ]];
                   then
                     comment="$comment ADDED on: $(date)"
