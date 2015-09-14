@@ -69,36 +69,40 @@ if [[ ! -f "$RFC4716key" ]];
                       esac
                     done
                 fi
+                if [[ $keyAdd = true ]];
+                  then
+                    comment="$comment ADDED on: $(date)"
+                    comment="$comment ADDED by: $USER"
 
-                comment="$comment ADDED on: $(date)"
-                comment="$comment ADDED by: $USER"
+                    # Concatenates the publickey and comment
+                    openssh="$publickey $comment"
 
-                # Concatenates the publickey and comment
-                openssh="$publickey $comment"
+                    # Creates user's .ssh directory if not present
+                    mkdir -p "/home/$USERNAME/.ssh/"
 
-                # Creates user's .ssh directory if not present
-                mkdir -p "/home/$USERNAME/.ssh/"
+                    # Enable write permissions to users  authorized_keys file
+                    touch "/home/$USERNAME/.ssh/authorized_keys"
+                    chmod 660 "/home/$USERNAME/.ssh/authorized_keys"
 
-                # Enable write permissions to users  authorized_keys file
-                touch "/home/$USERNAME/.ssh/authorized_keys"
-                chmod 660 "/home/$USERNAME/.ssh/authorized_keys"
+                    # Appends extracted key w. comment to users authorized_keys file
+                    #  to the end of the file, leaving existing keys untouched
+                    echo $openssh >> "/home/$USERNAME/.ssh/authorized_keys"
 
-                # Appends extracted key w. comment to users authorized_keys file
-                #  to the end of the file, leaving existing keys untouched
-                echo $openssh >> "/home/$USERNAME/.ssh/authorized_keys"
-
-                # Fix file/folder permissions, or else sshd will not accept authorized_keys file
-                chmod go-w "/home/$USERNAME"
-                chmod go-rwx "/home/$USERNAME/.ssh"
-                chmod 600 "/home/$USERNAME/.ssh/authorized_keys"
-                chown --quiet "$USERNAME" "/home/$USERNAME"
-                chown --quiet --recursive "$USERNAME" "/home/$USERNAME/.ssh"
+                    # Fix file/folder permissions, or else sshd will not accept authorized_keys file
+                    chmod go-w "/home/$USERNAME"
+                    chmod go-rwx "/home/$USERNAME/.ssh"
+                    chmod 600 "/home/$USERNAME/.ssh/authorized_keys"
+                    chown --quiet "$USERNAME" "/home/$USERNAME"
+                    chown --quiet --recursive "$USERNAME" "/home/$USERNAME/.ssh"
 
 
-                echo "SUCCESS: Added public key to authorized_keys file"
-                echo "Username: $USERNAME"
-                echo "Keyfile:  $RFC4716key"
-                echo "Comment:  $comment"
+                    echo "SUCCESS: Added public key to authorized_keys file"
+                    echo "Username: $USERNAME"
+                    echo "Keyfile:  $RFC4716key"
+                    echo "Comment:  $comment"
+                  else
+                    echo "Key NOT added to $USERNAME's authorized_keys"
+                fi
             fi
         fi
     fi
