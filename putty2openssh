@@ -45,6 +45,21 @@ if [[ ! -f "$RFC4716key" ]];
                 #   4. sed removes 'Comment: ' keyword and quotes
                 comment=$(cat "$RFC4716key" | awk '/Comment:/,/[^\\]$/' | sed 's_\\$__' | tr -d '\n' | sed -e 's_Comment: __' -e 's_"__g')
 
+                if [[ -z $comment ]];
+                  then
+                    echo "WARNING: Key contains no comment."
+                    echo "  Add current key to authorized_keys ?"
+                    select yn in "Yes" "No" ; do
+                      case $yn in
+                        Yes )  keyAdd=true;
+                               break;;
+                        No  )  keyAdd=false;
+                               break;;
+                        *   )  echo "Invalid option, try again"
+                      esac
+                    done
+                fi
+
                 #Check if key comment is repeated
                 repeatedComment_lines=$(grep "$comment" "/home/$USERNAME/.ssh/authorized_keys")
                 if [[ ! -z $repeatedComment_lines ]];
