@@ -42,6 +42,22 @@ if [[ ! -f "$RFC4716key" ]];
                 #   3. tr converts multiline comment into single line comment
                 #   4. sed removes 'Comment: ' keyword and quotes
                 comment=$(cat "$RFC4716key" | awk '/Comment:/,/[^\\]$/' | sed 's_\\$__' | tr -d '\n' | sed -e 's_Comment: __' -e 's_"__g')
+
+                #Check if key comment is repeated
+                repeatedComment_lines=$(grep "$comment" "/home/$USERNAME/.ssh/authorized_keys")
+                if [[ ! -z $repeatedComment_lines ]];
+                  then
+                    echo "WARNING: Key(s) with similar comment is already present"
+                    repeatedComment_count=1
+                    echo "  New key comment: $comment"
+                    # List the comments of the keys with similar comments
+                    echo "$repeatedComment_lines" | while read commentLine; do
+                      repeatedComment_comment=$(echo $commentLine | sed 's_^.*==__' | sed 's_^\ __' )
+                      echo "  Similar Key Comment $repeatedComment_count : $repeatedComment_comment"
+                      ((repeatedComment_count))
+                    done
+                fi
+
                 comment="$comment ADDED on: $(date)"
                 comment="$comment ADDED by: $USER"
 
