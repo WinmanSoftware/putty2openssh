@@ -33,6 +33,7 @@ if [[ ! -f "$RFC4716key" ]];
                 echo "ERROR: Key is already present in $USERNAME's authorized_keys file"
                 echo "  Existing key comment:"
                 echo "    $duplicateKey_comment"
+                echo "ERROR: NOT adding duplicate key to authorized_keys"
                 exit 32
               else
                 # Extracts comment from input publickey
