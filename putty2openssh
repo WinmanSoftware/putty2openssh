@@ -23,14 +23,19 @@ if [[ ! -f "$RFC4716key" ]];
             echo "ERROR: Username not present on system: $USERNAME"
             exit 16
           else
+            keyAdd=true
+
             # Generates public key using ssh-keygen
             publickey=$(ssh-keygen -if "$RFC4716key")
 
             #Check if publickey is already present in users ~/.ssh/authorized_keys file
-            grep "$publickey" "/home/$USERNAME/.ssh/authorized_keys" &> /dev/null
-            if [[ $? == 0 ]];
+            duplicateKey_comment=$(grep "$publickey" "/home/$USERNAME/.ssh/authorized_keys" | sed 's_^.*==__' | sed 's_^\ __')
+            if [[ ! -z $duplicateKey_comment ]];
               then
-                echo "WARNING: Key is already present in $USERNAME's authorized_keys file"
+                echo "ERROR: Key is already present in $USERNAME's authorized_keys file"
+                echo "  Existing key comment:"
+                echo "    $duplicateKey_comment"
+                echo "ERROR: NOT adding duplicate key to authorized_keys"
                 exit 32
               else
                 # Extracts comment from input publickey
@@ -39,35 +44,65 @@ if [[ ! -f "$RFC4716key" ]];
                 #   3. tr converts multiline comment into single line comment
                 #   4. sed removes 'Comment: ' keyword and quotes
                 comment=$(cat "$RFC4716key" | awk '/Comment:/,/[^\\]$/' | sed 's_\\$__' | tr -d '\n' | sed -e 's_Comment: __' -e 's_"__g')
-                comment="$comment ADDED on: $(date)"
-                comment="$comment ADDED by: $USER"
 
-                # Concatenates the publickey and comment
-                openssh="$publickey $comment"
+                #Check if key comment is repeated
+                repeatedComment_lines=$(grep "$comment" "/home/$USERNAME/.ssh/authorized_keys")
+                if [[ ! -z $repeatedComment_lines ]];
+                  then
+                    echo "WARNING: Key(s) with similar comment is already present"
+                    repeatedComment_count=1
+                    echo "  New key comment: $comment"
+                    # List the comments of the keys with similar comments
+                    echo "$repeatedComment_lines" | while read commentLine; do
+                      repeatedComment_comment=$(echo $commentLine | sed 's_^.*==__' | sed 's_^\ __' )
+                      echo "  Similar Key Comment $repeatedComment_count : $repeatedComment_comment"
+                      ((repeatedComment_count++))
+                    done
+                    echo "Add current key to authorized_keys ?"
+                    select yn in "Yes" "No" ; do
+                      case $yn in
+                        Yes )  keyAdd=true;
+                               break;;
+                        No  )  keyAdd=false;
+                               break;;
+                        *   )  echo "Invalid option, try again"
+                      esac
+                    done
+                fi
+                if [[ $keyAdd = true ]];
+                  then
+                    comment="$comment ADDED on: $(date)"
+                    comment="$comment ADDED by: $USER"
 
-                # Creates user's .ssh directory if not present
-                mkdir -p "/home/$USERNAME/.ssh/"
+                    # Concatenates the publickey and comment
+                    openssh="$publickey $comment"
 
-                # Enable write permissions to users  authorized_keys file
-                touch "/home/$USERNAME/.ssh/authorized_keys"
-                chmod 660 "/home/$USERNAME/.ssh/authorized_keys"
+                    # Creates user's .ssh directory if not present
+                    mkdir -p "/home/$USERNAME/.ssh/"
 
-                # Appends extracted key w. comment to users authorized_keys file
-                #  to the end of the file, leaving existing keys untouched
-                echo $openssh >> "/home/$USERNAME/.ssh/authorized_keys"
+                    # Enable write permissions to users  authorized_keys file
+                    touch "/home/$USERNAME/.ssh/authorized_keys"
+                    chmod 660 "/home/$USERNAME/.ssh/authorized_keys"
 
-                # Fix file/folder permissions, or else sshd will not accept authorized_keys file
-                chmod go-w "/home/$USERNAME"
-                chmod go-rwx "/home/$USERNAME/.ssh"
-                chmod 600 "/home/$USERNAME/.ssh/authorized_keys"
-                chown --quiet "$USERNAME" "/home/$USERNAME"
-                chown --quiet --recursive "$USERNAME" "/home/$USERNAME/.ssh"
+                    # Appends extracted key w. comment to users authorized_keys file
+                    #  to the end of the file, leaving existing keys untouched
+                    echo $openssh >> "/home/$USERNAME/.ssh/authorized_keys"
+
+                    # Fix file/folder permissions, or else sshd will not accept authorized_keys file
+                    chmod go-w "/home/$USERNAME"
+                    chmod go-rwx "/home/$USERNAME/.ssh"
+                    chmod 600 "/home/$USERNAME/.ssh/authorized_keys"
+                    chown --quiet "$USERNAME" "/home/$USERNAME"
+                    chown --quiet --recursive "$USERNAME" "/home/$USERNAME/.ssh"
 
 
-                echo "SUCCESS: Added public key to authorized_keys file"
-                echo "Username: $USERNAME"
-                echo "Keyfile:  $RFC4716key"
-                echo "Comment:  $comment"
+                    echo "SUCCESS: Added public key to authorized_keys file"
+                    echo "Username: $USERNAME"
+                    echo "Keyfile:  $RFC4716key"
+                    echo "Comment:  $comment"
+                  else
+                    echo "Key NOT added to $USERNAME's authorized_keys"
+                fi
             fi
         fi
     fi
